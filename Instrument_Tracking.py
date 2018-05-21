@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
+Author: Michael Stiefel
+Updated: 21.05.2018
 
-This is a temporary script file.
+This is the a script to do instrument tracking 
 """
 
 import numpy as np
@@ -19,51 +20,28 @@ from tkinter import *
 
 def findPupilCenter (img):
     #++++++++Detect Circle Center++++++++++++++
-    # -- Aplying only simple thresholding -- 
+    # Aplying heavy image blurring in order to vanish all disturbing features 
     img = cv2.medianBlur(img,45)
     cimg = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
     #cv2.imshow('Original Image',img)
     
+    # Equalizing the histogramm in order to imporve the performance of the hough transform
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     equal = clahe.apply(img)
     #cv2.imshow('Equalized Histogramm', equal)
     #cv2.imshow('feature detection', cimg)
+    
+    # Applying Hough Circle Transform to identify the pupil center 
     circle = cv2.HoughCircles(equal,cv2.HOUGH_GRADIENT,1,100,param1=50,param2=30,minRadius=75,maxRadius=150)
     circle = np.uint16(np.around(circle))
-    for i in circles[0,:]:
+    for i in circle[0,:]:
         # draw the outer circle
         cv2.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
         # draw the center of the circle
         cv2.circle(cimg,(i[0],i[1]),2,(0,0,255),3)
     #cv2.imshow('detected circles',cimg) 
-    
-    
-#    #ret, thresh = cv2.threshold(img,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-#    thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,51,9)
-#    #ret, thresh = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-#    cv2.imshow('Thresholding', thresh)
-    
-#    kernel = np.ones((3,3),np.uint8)
-#    er = cv2.erode(thresh,kernel,iterations=6)
-#    dil = cv2.dilate(er,kernel,iterations=6)
-#    cv2.imshow('Dilation', dil)
-    
-    
-    # Calculate center of circle:
-#    thresh_inv = np.zeros(thresh.shape, dtype = 'uint8')
-#    thresh_inv[dil ==0] = 255
-#    dist_transform = cv2.distanceTransform(thresh_inv,cv2.DIST_L2,5)
-#    ind_center = np.unravel_index(np.argmax(dist_transform, axis=None), dist_transform.shape)
-#    cv2.imshow('Distance Transform', np.uint8(dist_transform))
-#    
-#    sobel = cv2.Sobel(thresh,cv2.CV_8U,1,0,ksize=5)
-#    ind_circle = np.unravel_index(np.argmax(sobel, axis=None), sobel.shape)
-#    radius = np.int(np.ceil(np.sqrt(np.square(ind_center[1]-ind_circle[1])+np.square(ind_center[0]-ind_circle[0]))))
-#    
-#    cv2.circle(cimg,(ind_center[1],ind_center[0]),2,(0,0,255),3)
-#    cv2.circle(cimg,(ind_center[1],ind_center[0]),radius,(0,255,0),3)
-#    cv2.imshow('Center marked', cimg)
-    
+        
+    # Press 0 to close all windows (only needed for testing)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
     
@@ -109,10 +87,10 @@ data.destroy()
 imagelist = []
 circles_vector = []
 # +++++++++++++ Set save path ++++++++++
-#data  = Tk()
-#data.filepath = filedialog.askdirectory(initialdir = "/",title = "Select Directory to save results")
-#savepath = data.filepath
-#data.destroy()
+data  = Tk()
+data.filepath = filedialog.askdirectory(initialdir = "/",title = "Select Directory to save results")
+savepath = data.filepath
+data.destroy()
 
 # +++++++++++++++ Main +++++++++++++++++++
 i = 0
@@ -143,6 +121,6 @@ for i in range(0,len(filelist)):
     zero = findInstr(img,circles_vector[i])
     
     # ++++ Save annotated images +++++
-#    save_img_path = os.path.normpath(os.path.join(savepath,filelist[i]))
-#    print(save_img_path)
-#    cv2.imwrite(save_img_path, cimg)
+    save_img_path = os.path.normpath(os.path.join(savepath,filelist[i]))
+    print(save_img_path)
+    cv2.imwrite(save_img_path, cimg)
