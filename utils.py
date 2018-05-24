@@ -89,3 +89,18 @@ def findPupilCenter2 (img):
     plt.imshow(image_raw, cmap =plt.cm.gray)
     
     return image_raw, indices[0][0], indices[1][0]
+
+def cutpatch (img, x_center, y_center,width,height):
+    # width, height should be odd numbers 
+    # returns 2D-Array if Gray image or RGB-patch if the input was RGB-Image
+    cut_img = img
+    x_top_left = x_center - (width-1)/2
+    y_top_left = y_center - (height-1)/2
+    if len(cut_img.shape) == 2: 
+        patch = cut_img[y_top_left:y_top_left+height,x_top_left:x_top_left+width]
+    elif len(cut_img.shape) ==3:
+        patch = cut_img[y_top_left:y_top_left+height,x_top_left:x_top_left+width,:]
+    else:
+        patch = np.zeros((width,height), dtype = 'uint8')
+    
+    return patch
