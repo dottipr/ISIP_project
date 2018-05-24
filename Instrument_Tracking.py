@@ -13,6 +13,7 @@ import time
 from tkinter import filedialog
 from tkinter import *
 from skimage import io
+from skimage import color
 
 # Import of all our functions defined in the utils.py script
 from utils import *
@@ -41,9 +42,12 @@ savepath = data.filepath
 data.destroy()
 
 # +++++ This function imports all images that are in the selected folder
-# All files will be imported to the list called imagelist
+# 1) files will be imported to the list called imagelist
 # The imported RGB-images are numpy arrays with format MxNx3
+# 2) files will be converted into gray scale and stored in imagelist_gray
+# The imported Files are numpy array with format MxN
 imagelist = []
+imagelist_gray =[]
 for i in range(0,len(filelist)):
     if len(filelist) == len(pathlist):
         filepath = os.path.normpath(os.path.join(pathlist[i],filelist[i]))
@@ -52,6 +56,10 @@ for i in range(0,len(filelist)):
     center = (0,0)
     img = io.imread(filepath)
     imagelist.append(img)
+    img_raw = color.rgb2gray(img)
+    img_gray =np.uint8(255*(img_raw/img_raw.max()))
+    imagelist_gray.append(img_gray)
+
 
 # +++++++++++++++ Main +++++++++++++++++++
 # Some Global Variable that we need:
