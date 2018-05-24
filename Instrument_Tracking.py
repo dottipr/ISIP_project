@@ -3,7 +3,7 @@
 Author: Michael Stiefel and Prisca Dotti
 Updated: 24.05.2018
 
-This is the a script to do instrument tracking 
+This is the a script to do instrument tracking
 """
 
 import numpy as np
@@ -32,8 +32,8 @@ for root, dirs, files in os.walk(data.filepath):
         if file.endswith(".png"):
             filelist.append(file)
             pathlist.append(root)
-             
-data.destroy()             
+
+data.destroy()
 
 # +++++++++++++ Set save path ++++++++++
 data  = Tk()
@@ -67,11 +67,11 @@ first_center_x = 0  # x-Coordinate of the Instrument center in the first image
 first_center_y = 0  # y-Coordinate of the Instrument center in the first image
 
 
-    
 
 
 
-#Some chunck 
+
+#Some chunck
 #circles_vector = []
 ##    cimg, circle = findPupilCenter(img)
 #    cimg,x_center, y_center = findPupilCenter2(img)
@@ -79,7 +79,7 @@ first_center_y = 0  # y-Coordinate of the Instrument center in the first image
 ##        circles_vector.append(circle)
 ##    else:
 ##        circles_vector.append([0,0,100])
-#    
+#
 #    # ++++ Save annotated images +++++
 #    save_img_path = os.path.normpath(os.path.join(savepath,filelist[i]))
 #    print(save_img_path)

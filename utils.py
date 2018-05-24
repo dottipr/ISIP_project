@@ -194,9 +194,10 @@ def computeResponsePixel(patch, sigma=3, filter_size=10, k=0.4):
     return np.linalg.det(H)-k*np.trace(H)*np.trace(H)
 
 def computeResponseMatrix(image, patch_half_size=7):
-    # input: greyscale image (2-dimensional array) and patch half size
+    # input: greyscale image (2-dimensional array) of dimension NxM and patch half size
     # output: array containing response value for each pixel in the image
     #         (being defined only on valid pixels of the image w.r.t. the patch)
+    #         the new array has dimension N-2*patch_half_size x M-2*patch_half_size
 
     n,m = np.shape(image)
     patch_size = 2*patch_half_size+1
@@ -223,20 +224,32 @@ def binaryResponse(image, fraction=0.5):
 
     return np.where(image<threshold, 1, 0)
 
+def harrisCorners(image):
+    # input: greyscale image
+    # output: array containing masked region that correspond to corners
+    #         the new array has dimension N-2*patch_half_size x M-2*patch_half_size
+    #         (patch_half_size=7, if necessary it can be added as a parameter)
+
+    response = responseMatrix(image)
+
+    return binaryResponse(response)
+
 
 #################### Tool detection functions ####################
 
 
-def findTool(previousImg, newImg, x, y, patch_half_size=20, sigma=4):
-    # input: previous image (previousImg) with position of the tool in it (x and y)
+def findTool(newImg, x, y, patch_half_size=17, sigma=3):
+    # input: position of the tool in the previous image (x and y)
     #        and new image (newImg) where we want to find the position of the tool,
     #        patch half size and sigma value for Gaussian filtering
     # output: position x and y of the tool in the new image
 
     patch_size = 2*patch_half_size+1
     patch = cutpatch(newImg, x, y, patch_size, patch_size)
-    response = computeResponseMatrix(patch)
+    response_half_size=7
+    response = computeResponseMatrix(patch, response_half_size)
     mask = binaryResponse(response, 0.5)
+
 
     #apply gaussian filter to binary mask to give priority to positions close
     #to the previous one
@@ -244,32 +257,44 @@ def findTool(previousImg, newImg, x, y, patch_half_size=20, sigma=4):
     mask = gaussianFilter*mask
 
     #define new position of the tool
-    y_rel,x_rel = np.unravel_index(np.argmax(mask, axis=None), mask.shape)# relative to patch
+    maskedResponse = response * mask
+    y_rel,x_rel = np.unravel_index(np.argmin(maskedResponse, axis=None), maskedResponse.shape)# relative to patch
     mask_half_size = int((mask[0].size-1)/2)
-    print(mask_half_size)
     x_top_left = x-mask_half_size
     y_top_left = y-mask_half_size
     x_new = x_top_left + x_rel
     y_new = y_top_left + y_rel
 
-    ''' for debugging
+    ''' debugging
     plt.figure()
-    plt.subplot(1,3,1)
+
+    plt.subplot(2,3,1)
     plt.imshow(patch)
     plt.axis("off")
     plt.title("original patch")
-    plt.scatter((patch[0].size-mask[0].size)/2+x,(patch[0].size-mask[0].size)/2+y)
-    plt.subplot(1,3,2)
+    plt.scatter((patch[0].size-mask[0].size)/2+x_rel,(patch[0].size-mask[0].size)/2+y_rel)
+
+    plt.subplot(2,3,2)
     plt.imshow(response)
     plt.axis("off")
     plt.title("response matrix")
-    plt.subplot(1,3,3)
+
+    plt.subplot(2,3,3)
+    plt.imshow(mask0)
+    plt.axis("off")
+    plt.title("mask without gaussian")
+
+    plt.subplot(2,3,4)
     plt.imshow(mask)
     plt.axis("off")
-    plt.scatter(x,y)
-    plt.title("new position")
+    plt.title("mask with gaussian")
+
+    plt.subplot(2,3,5)
+    plt.imshow(maskedResponse)
+    plt.axis("off")
+    plt.title("masked response with gaussian")
+    plt.scatter(x_rel,y_rel)
+
     plt.show()
     '''
-
-
-    return [y_new, x_new]
+    return [x_new, y_new]
