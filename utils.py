@@ -54,42 +54,82 @@ def findPupilCenter2 (img):
 
     # Load picture
     #image_raw = io.imread(filepath, as_grey= True)
-    image_raw = color.rgb2gray(image_color)
-    image =np.uint8(255*(image_raw/image_raw.max()))
-    plt.figure()
-    plt.imshow(image, cmap = plt.cm.gray)
-    image = filters.gaussian(image, sigma=31)
-    plt.figure()
-    plt.title('Gaussian Filtered Image')
-    plt.imshow(image, cmap = plt.cm.gray)
+    #image_raw = color.rgb2gray(image_color)
+    #image =np.uint8(255*(image_raw/image_raw.max()))
+#    plt.figure()
+#    plt.imshow(image, cmap = plt.cm.gray)
+    image = filters.gaussian(img, sigma=31)
+#    plt.figure()
+#    plt.title('Gaussian Filtered Image')
+#    plt.imshow(image, cmap = plt.cm.gray)
     #image = exposure.equalize_hist(image)
     low, high = np.percentile(image, (50, 90))
     image = exposure.rescale_intensity(image, in_range=(low, high))
-    plt.figure()
-    plt.title('Rescaled intensity')
-    plt.imshow(image, cmap = plt.cm.gray)
+#    plt.figure()
+#    plt.title('Rescaled intensity')
+#    plt.imshow(image, cmap = plt.cm.gray)
         
     thresh = threshold_otsu(image, nbins=256)
     image_threshold = image > thresh
-    plt.figure()
-    plt.title('Thresholded Image')
-    plt.imshow(image_threshold, cmap =plt.cm.gray)
+#    plt.figure()
+#    plt.title('Thresholded Image')
+#    plt.imshow(image_threshold, cmap =plt.cm.gray)
     
     dist = scipy.ndimage.morphology.distance_transform_edt(image_threshold, return_distances=True, return_indices=False)
-    plt.figure()
-    plt.title('Distance Transform')
-    plt.imshow(dist, cmap =plt.cm.gray)
+#    plt.figure()
+#    plt.title('Distance Transform')
+#    plt.imshow(dist, cmap =plt.cm.gray)
     
     indices = np.where(dist == dist.max())
     
-    circy, circx = circle_perimeter(indices[0][0], indices[1][0], 10)
-    image_raw[circy, circx] = 0
-    plt.figure()
-    plt.title('Marked Image')
-    plt.imshow(image_raw, cmap =plt.cm.gray)
-    
-    return image_raw, indices[0][0], indices[1][0]
+#    circy, circx = circle_perimeter(indices[0][0], indices[1][0], 10)
+#    img[circy, circx] = 0
+#    plt.figure()
+#    plt.title('Marked Image')
+#    plt.imshow(img, cmap =plt.cm.gray)
+    return indices[0][0], indices[1][0]
 
+def alignImages (imagelist):
+    #Input: List of images (imagelist)
+    #Output: list of aligned images (imagelist_corr)
+    imagelist_corr = []
+    center_vector = []
+    shift_vector = []
+    height = imagelist[0].shape[0]
+    width =  imagelist[0].shape[1]   
+    for ind, img in enumerate(imagelist):
+        if ind == 0:
+            y_center,x_center = findPupilCenter2(img)
+            center_vector.append((y_center,x_center))
+            imagelist_corr.append(img)
+            shift_vector.append((0,0))
+        elif ind > 0:
+            y_center,x_center = findPupilCenter2(img)
+            center_vector.append((y_center,x_center))
+            #compute difference 
+            x_diff = x_center - center_vector[0][1]
+            y_diff = y_center - center_vector[0][0]
+            shift_vector.append((y_diff,x_diff))
+            #Shift image
+            newImg = np.zeros((1001,1001), dtype='uint8')
+            if x_diff >= 0 and y_diff >= 0:
+                x_top_left = 501-width/2-x_diff
+                y_top_left = 501-height/2-y_diff
+            elif x_diff <= 0 and y_diff <= 0:
+                x_top_left = 501-width/2-x_diff
+                y_top_left = 501-height/2-y_diff
+            elif x_diff > 0 and y_diff < 0:
+                x_top_left = 501-width/2-x_diff
+                y_top_left = 501-height/2-y_diff
+            elif x_diff < 0 and y_diff > 0:
+                x_top_left = 501-width/2+x_diff
+                y_top_left = 501-height/2+y_diff
+            newImg[y_top_left:y_top_left+height, x_top_left:x_top_left+width] = img
+            expImg = newImg[501-height/2:501+height/2,501-width/2:501+width/2]
+            imagelist_corr.append(expImg)
+        
+    return imagelist_corr, shift_vector
+    
 def cutpatch (img, x_center, y_center,width,height):
     # width, height should be odd numbers 
     # returns 2D-Array if Gray image or RGB-patch if the input was RGB-Image
@@ -104,3 +144,13 @@ def cutpatch (img, x_center, y_center,width,height):
         patch = np.zeros((width,height), dtype = 'uint8')
     
     return patch
+
+def compute_background_image(stack):
+    # Input: Stack of images to compute the background image
+    # Output: Background image dtype = uint8 
+    avg_img_raw = np.zeros(img_corr[0].shape, dtype = 'uint16')
+    for ind , img in enumerate(img_corr):
+        avg_img_raw = avg_img_raw+img
+    avg_img_raw =avg_img_raw/len(img_corr)
+    avg_img = np.uint8(255*(avg_img_raw/avg_img_raw.max()))
+    return avg_img
