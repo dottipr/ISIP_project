@@ -212,7 +212,7 @@ def computeResponseMatrix(image, patch_half_size=7):
 
     return responseMatrix
 
-def binaryResponse(image, fraction=0.5):
+def binaryResponse(image, fraction=0.4):
     # input: greyscale image and fraction below of which we "keep" the points
     #        (between 0 and 1) the smaller the fraction, the more we keep from
     #        the image
@@ -238,7 +238,7 @@ def harrisCorners(image):
 #################### Tool detection functions ####################
 
 
-def findTool(newImg, x, y, patch_half_size=17, sigma=3):
+def findTool(newImg, x, y, patch_half_size=17, sigma=5):
     # input: position of the tool in the previous image (x and y)
     #        and new image (newImg) where we want to find the position of the tool,
     #        patch half size and sigma value for Gaussian filtering
@@ -248,13 +248,13 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=3):
     patch = cutpatch(newImg, x, y, patch_size, patch_size)
     response_half_size=7
     response = computeResponseMatrix(patch, response_half_size)
-    mask = binaryResponse(response, 0.5)
+    mask0 = binaryResponse(response)
 
 
     #apply gaussian filter to binary mask to give priority to positions close
     #to the previous one
-    gaussianFilter = gauss2d(sigma, mask[0].size)
-    mask = gaussianFilter*mask
+    gaussianFilter = gauss2d(sigma, mask0[0].size)
+    mask = gaussianFilter*mask0
 
     #define new position of the tool
     maskedResponse = response * mask
@@ -265,7 +265,7 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=3):
     x_new = x_top_left + x_rel
     y_new = y_top_left + y_rel
 
-    ''' debugging
+    '''
     plt.figure()
 
     plt.subplot(2,3,1)

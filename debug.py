@@ -11,11 +11,14 @@ from utils import *
 # files (on which we can work separately) and then put the rest in the main
 # I let you modify it when your code is working :-)
 
-filenames = glob.glob(os.path.join('project_data', 'a', '*.png'))
+filenames = glob.glob(os.path.join('project_data', 'b', '*.png'))
 images = [np.asarray(Image.open(f).convert('L')) for f in filenames]
+images = [gconv(i,3,7) for i in images]
+#images = [cv2.bilateralFilter(i,5,150,150) for i in images]
+
 
 #position in first image
-x,y = 348,191
+x,y = 439-3,272-3 # -3 as gaussian filter reduces the size of the images
 
 currentImg = images[0]
 
@@ -41,30 +44,3 @@ for i in range(1,len(images)-1):
     y = position[1]
 
 plt.show()
-
-'''
-patch = cutpatch(images[1], x, y, 41,41)
-
-response = computeResponseMatrix(patch)
-
-binary = binaryResponse(response)
-
-plt.figure()
-plt.subplot(1,3,1)
-plt.imshow(patch)
-plt.axis('off')
-plt.subplot(1,3,2)
-plt.imshow(response)
-plt.axis('off')
-plt.subplot(1,3,3)
-plt.imshow(binary)
-plt.axis('off')
-plt.show()
-
-a = findTool(images[1],348,191)
-
-plt.figure()
-plt.imshow(images[1])
-plt.scatter(a[0],a[1])
-plt.show()
-'''
