@@ -3,7 +3,7 @@
 Author: Michael Stiefel and Prisca Dotti
 Updated: 24.05.2018
 
-This is the a script to do instrument tracking 
+This is the a script to do instrument tracking
 """
 
 import numpy as np
@@ -37,8 +37,8 @@ for root, dirs, files in os.walk(data.filepath):
         if file.endswith(".png"):
             filelist.append(file)
             pathlist.append(root)
-             
-data.destroy()             
+
+data.destroy()
 
 # +++++++++++++ Set save path ++++++++++
 data  = Tk()
@@ -67,6 +67,7 @@ for i in range(0,len(filelist)):
 
 # +++++++++++++++ Main +++++++++++++++++++
 # Some Global Variable that we need:
+
 first_center_x = 348  # x-Coordinate of the Instrument center in the first image
 first_center_y = 191  # y-Coordinate of the Instrument center in the first image
 
@@ -109,7 +110,6 @@ for ind, img in enumerate(img_diff):
     # ++++ Save annotated images +++++
 
 
-
 #patch = cutpatch(imagelist_gray[0],first_center_x,first_center_y,100,100)
 #plt.imshow(patch, cmap = 'gray')
 #
@@ -130,15 +130,11 @@ for ind, img in enumerate(img_diff):
 #plt.figure()
 #plt.imshow(segments)
 
-
 # Chunk to draw a circle on the image using skimage function
 #rr, cc = draw.circle(first_center_y, first_center_x, 10, a.shape)
 #a[rr,cc,:] = (255, 255, 0)
     
-
-
-
-#Some chunck 
+#Some chunck
 #circles_vector = []
 ##    cimg, circle = findPupilCenter(img)
 #    cimg,x_center, y_center = findPupilCenter2(img)
@@ -146,4 +142,3 @@ for ind, img in enumerate(img_diff):
 ##        circles_vector.append(circle)
 ##    else:
 ##        circles_vector.append([0,0,100])
-#    
