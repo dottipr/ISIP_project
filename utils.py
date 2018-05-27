@@ -147,10 +147,10 @@ def cutpatch (img, x_center, y_center,width,height):
 def compute_background_image(stack):
     # Input: Stack of images to compute the background image
     # Output: Background image dtype = uint8 
-    avg_img_raw = np.zeros(img_corr[0].shape, dtype = 'uint16')
-    for ind , img in enumerate(img_corr):
+    avg_img_raw = np.zeros(stack[0].shape, dtype = 'uint16')
+    for ind , img in enumerate(stack):
         avg_img_raw = avg_img_raw+img
-    avg_img_raw =avg_img_raw/len(img_corr)
+    avg_img_raw =avg_img_raw/len(stack)
     avg_img = np.uint8(255*(avg_img_raw/avg_img_raw.max()))
     return avg_img
 
@@ -291,6 +291,8 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=5):
 
     patch_size = 2*patch_half_size+1
     patch = cutpatch(newImg, x, y, patch_size, patch_size)
+#    plt.figure()
+#    plt.imshow(patch, cmap ='gray')
     response_half_size=7
     response = computeResponseMatrix(patch, response_half_size)
     mask0 = binaryResponse(response)
@@ -310,36 +312,36 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=5):
     x_new = x_top_left + x_rel
     y_new = y_top_left + y_rel
 
-    '''
-    plt.figure()
+#    plt.figure()
 
-    plt.subplot(2,3,1)
-    plt.imshow(patch)
-    plt.axis("off")
-    plt.title("original patch")
-    plt.scatter((patch[0].size-mask[0].size)/2+x_rel,(patch[0].size-mask[0].size)/2+y_rel)
+#    plt.subplot(2,3,1)
+#    plt.imshow(patch)
+#    plt.axis("off")
+#    plt.title("original patch")
+#    plt.scatter((patch[0].size-mask[0].size)/2+x_rel,(patch[0].size-mask[0].size)/2+y_rel)
 
-    plt.subplot(2,3,2)
-    plt.imshow(response)
-    plt.axis("off")
-    plt.title("response matrix")
+#    plt.subplot(2,3,2)
+#    plt.imshow(response)
+#    plt.axis("off")
+#    plt.title("response matrix")
+    
+#    plt.figure()
+#    plt.subplot(2,3,3)
+#    plt.imshow(mask0)
+#    plt.axis("off")
+#    plt.title("mask without gaussian")
 
-    plt.subplot(2,3,3)
-    plt.imshow(mask0)
-    plt.axis("off")
-    plt.title("mask without gaussian")
-
-    plt.subplot(2,3,4)
-    plt.imshow(mask)
-    plt.axis("off")
-    plt.title("mask with gaussian")
-
-    plt.subplot(2,3,5)
-    plt.imshow(maskedResponse)
-    plt.axis("off")
-    plt.title("masked response with gaussian")
-    plt.scatter(x_rel,y_rel)
-
-    plt.show()
-    '''
+#    plt.subplot(2,3,4)
+#    plt.imshow(mask)
+#    plt.axis("off")
+#    plt.title("mask with gaussian")
+#    plt.figure()
+#    plt.subplot(2,3,5)
+#    plt.imshow(maskedResponse)
+#    plt.axis("off")
+#    plt.title("masked response with gaussian")
+#    plt.scatter(x_rel,y_rel)
+#
+#    plt.show()
+    
     return [x_new, y_new]
