@@ -12,7 +12,7 @@ from utils import *
 # files (on which we can work separately) and then put the rest in the main
 # I let you modify it when your code is working :-)
 
-filenames = glob.glob(os.path.join('project_data', 'a', '*.png'))
+filenames = glob.glob(os.path.join('project_data', 'b', '*.png'))
 images = [np.asarray(Image.open(f).convert('L')) for f in filenames]
 images = [gconv(i,3,7,mode='same') for i in images]
 #images = [DoG(i,15,20,15,mode='same') for i in images]
@@ -22,7 +22,7 @@ images = [gconv(i,3,7,mode='same') for i in images]
 
 
 #position in first image
-x,y = 348,191 # -3 as gaussian filter reduces the size of the images
+x,y = 439,272#348,191 # -3 as gaussian filter reduces the size of the images
 
 currentImg = images[0]
 

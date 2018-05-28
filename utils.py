@@ -335,7 +335,7 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=5):
     #        and new image (newImg) where we want to find the position of the tool,
     #        patch half size and sigma value for Gaussian filtering
     # output: position x and y of the tool in the new image
-
+    
     patch_size = 2*patch_half_size+1
     patch = cutpatch(newImg, x, y, patch_size, patch_size)
     # patch = histogramEqualization(old) #uncomment to apply histogram equalization to patch
@@ -394,3 +394,7 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=5):
     plt.show()
     '''
     return [x_new, y_new]
+
+def findClosest(lst, point):
+    dist = [np.sqrt((p[0]-point[0])*(p[0]-point[0])+(p[1]-point[1])*(p[1]-point[1])) for p in lst]
+    return lst[np.argmin(dist)]
