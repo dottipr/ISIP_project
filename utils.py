@@ -61,22 +61,22 @@ def findPupilCenter2 (img):
 #    plt.imshow(image, cmap = plt.cm.gray)
     low, high = np.percentile(image, (50, 90))
     image = exposure.rescale_intensity(image, in_range=(low, high))
-    
+
 #    plt.figure()
 #    plt.title('Rescaled intensity')
 #    plt.imshow(image, cmap = plt.cm.gray)
-        
+
     thresh = threshold_otsu(image, nbins=256)
     image_threshold = image > thresh
 #    plt.figure()
 #    plt.title('Thresholded Image')
 #    plt.imshow(image_threshold, cmap =plt.cm.gray)
-    
+
     dist = scipy.ndimage.morphology.distance_transform_edt(image_threshold, return_distances=True, return_indices=False)
 #    plt.figure()
 #    plt.title('Distance Transform')
 #    plt.imshow(dist, cmap =plt.cm.gray)
-    
+
     indices = np.where(dist == dist.max())
     # Marking the center of the eye needed for debuging only
 #    circy, circx = circle_perimeter(indices[0][0], indices[1][0], 10)
@@ -85,7 +85,7 @@ def findPupilCenter2 (img):
 #    plt.title('Marked Image')
 #    plt.imshow(img, cmap =plt.cm.gray)
     return indices[0][0], indices[1][0]
-    
+
 
 def alignImages (imagelist):
     #Input: List of images (imagelist)
@@ -94,7 +94,7 @@ def alignImages (imagelist):
     center_vector = []
     shift_vector = []
     height = imagelist[0].shape[0]
-    width =  imagelist[0].shape[1]   
+    width =  imagelist[0].shape[1]
     for ind, img in enumerate(imagelist):
         if ind == 0:
             y_center,x_center = findPupilCenter2(img)
@@ -104,7 +104,7 @@ def alignImages (imagelist):
         elif ind > 0:
             y_center,x_center = findPupilCenter2(img)
             center_vector.append((y_center,x_center))
-            #compute difference 
+            #compute difference
             x_diff = x_center - center_vector[0][1]
             y_diff = y_center - center_vector[0][0]
             shift_vector.append((y_diff,x_diff))
@@ -122,12 +122,12 @@ def alignImages (imagelist):
             elif x_diff < 0 and y_diff > 0:
                 x_top_left = 501-width/2+x_diff
                 y_top_left = 501-height/2+y_diff
-            newImg[y_top_left:y_top_left+height, x_top_left:x_top_left+width] = img
-            expImg = newImg[501-height/2:501+height/2,501-width/2:501+width/2]
+            newImg[int(y_top_left):int(y_top_left+height), int(x_top_left):int(x_top_left+width)] = img
+            expImg = newImg[int(501-height/2):int(501+height/2),int(501-width/2):int(501+width/2)]
             imagelist_corr.append(expImg)
-        
+
     return imagelist_corr, shift_vector
-    
+
 def cutpatch (img, x_center, y_center,width,height):
     # width, height should be odd numbers
     # returns 2D-Array if Gray image or RGB-patch if the input was RGB-Image
@@ -141,18 +141,46 @@ def cutpatch (img, x_center, y_center,width,height):
         patch = cut_img[y_top_left:y_top_left+height,x_top_left:x_top_left+width,:]
     else:
         patch = np.zeros((width,height), dtype = 'uint8')
-    
+
     return patch
 
 def compute_background_image(stack):
     # Input: Stack of images to compute the background image
-    # Output: Background image dtype = uint8 
+    # Output: Background image dtype = uint8
     avg_img_raw = np.zeros(stack[0].shape, dtype = 'uint16')
     for ind , img in enumerate(stack):
         avg_img_raw = avg_img_raw+img
     avg_img_raw =avg_img_raw/len(stack)
     avg_img = np.uint8(255*(avg_img_raw/avg_img_raw.max()))
     return avg_img
+
+def compute_background_image2(stack):
+    # Input : Stack of images to compute the background images
+    # Output : Stack containing the background of each image using adjacent frame difference
+    backgrounds = []
+    backgrounds.append(stack[0]) # we don't need the background of the first image
+    for i in range(1,len(stack)):
+        backgrounds.append(stack[i]-stack[i-1])
+    return backgrounds
+
+def histogramEqualization(img):
+    # Input : greyscale image
+    # Output : greyscale image with equalized histogram
+    img = img.astype(int)
+    L = np.amax(img)+1
+    n,m = np.shape(img)
+    tot = n*m #number of pixel in img
+
+    p_n = np.array([tot-np.count_nonzero(img-i) for i in range(0,L)]) #count the number of pixel in img having value i
+    p_n = p_n/tot
+
+    imgH = np.zeros((n,m))
+
+    for i in range(0,n):
+        for j in range(0,m):
+            pn = np.sum([p_n[k] for k in range(0,img[i,j])])
+            imgH[i,j] = int((L-1)*pn)
+    return imgH
 
 
 #################### Homework 2 functions ####################
@@ -189,7 +217,7 @@ def gauss2d(sigma, filter_size=10):
 
     return gauss2d_filter
 
-def gconv(img, sigma, filter_size):
+def gconv(img, sigma, filter_size, mode='valid'):
     # Function that filters an image with a Gaussian filter
     # INPUTS
     # @ img           : 2D image
@@ -200,7 +228,26 @@ def gconv(img, sigma, filter_size):
 
     filter = gauss2d(sigma, filter_size)
 
-    return convolve2d(img, filter, mode='valid')
+    return convolve2d(img, filter, mode)
+
+def DoG(img, sigma_1, sigma_2, filter_size, mode='valid'):
+    # Function that creates Difference of Gaussians (DoG) for given standard
+    # deviations and filter size
+    # INPUTS
+    # @ img
+    # @ img           : 2D image (MxN)
+    # @ sigma_1       : standard deviation of of the first Gaussian distribution
+    # @ sigma_2       : standard deviation of the second Gaussian distribution
+    # @ filter_size   : the size of the filters
+    # OUTPUTS
+    # @ dog           : Difference of Gaussians of size
+    #                   (M+filter_size-1)x(N_filter_size-1)
+
+    img_f1 = gconv(img, sigma_1, filter_size, mode)
+    img_f2 = gconv(img, sigma_2, filter_size, mode)
+    dog = img_f1 - img_f2
+
+    return dog
 
 
 #################### Harris corners related functions ####################
@@ -291,6 +338,8 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=5):
 
     patch_size = 2*patch_half_size+1
     patch = cutpatch(newImg, x, y, patch_size, patch_size)
+    # patch = histogramEqualization(old) #uncomment to apply histogram equalization to patch
+    #patch = DoG(old,1,1.5,9,mode='valid') #uncomment to apply DoG to patch
 #    plt.figure()
 #    plt.imshow(patch, cmap ='gray')
     response_half_size=7
@@ -311,37 +360,37 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=5):
     y_top_left = y-mask_half_size
     x_new = x_top_left + x_rel
     y_new = y_top_left + y_rel
+    '''
+    plt.figure()
 
-#    plt.figure()
+    plt.subplot(2,3,1)
+    plt.imshow(old)
+    plt.axis("off")
+    plt.title("original patch")
+    plt.scatter((patch[0].size-mask[0].size)/2+x_rel,(patch[0].size-mask[0].size)/2+y_rel)
 
-#    plt.subplot(2,3,1)
-#    plt.imshow(patch)
-#    plt.axis("off")
-#    plt.title("original patch")
-#    plt.scatter((patch[0].size-mask[0].size)/2+x_rel,(patch[0].size-mask[0].size)/2+y_rel)
+    plt.subplot(2,3,2)
+    plt.imshow(patch)
+    plt.axis("off")
+    plt.title("DoG")
 
-#    plt.subplot(2,3,2)
-#    plt.imshow(response)
-#    plt.axis("off")
-#    plt.title("response matrix")
-    
-#    plt.figure()
-#    plt.subplot(2,3,3)
-#    plt.imshow(mask0)
-#    plt.axis("off")
-#    plt.title("mask without gaussian")
+    #plt.figure()
+    plt.subplot(2,3,3)
+    plt.imshow(response)
+    plt.axis("off")
+    plt.title("response matrix")
 
-#    plt.subplot(2,3,4)
-#    plt.imshow(mask)
-#    plt.axis("off")
-#    plt.title("mask with gaussian")
-#    plt.figure()
-#    plt.subplot(2,3,5)
-#    plt.imshow(maskedResponse)
-#    plt.axis("off")
-#    plt.title("masked response with gaussian")
-#    plt.scatter(x_rel,y_rel)
-#
-#    plt.show()
-    
+    plt.subplot(2,3,4)
+    plt.imshow(mask)
+    plt.axis("off")
+    plt.title("mask with gaussian")
+    #plt.figure()
+    plt.subplot(2,3,5)
+    plt.imshow(maskedResponse)
+    plt.axis("off")
+    plt.title("masked response with gaussian")
+    plt.scatter(x_rel,y_rel)
+
+    plt.show()
+    '''
     return [x_new, y_new]
