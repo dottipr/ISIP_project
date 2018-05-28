@@ -154,6 +154,7 @@ def compute_background_image(stack):
     avg_img = np.uint8(255*(avg_img_raw/avg_img_raw.max()))
     return avg_img
 
+'''
 def compute_background_image2(stack):
     # Input : Stack of images to compute the background images
     # Output : Stack containing the background of each image using adjacent frame difference
@@ -360,41 +361,14 @@ def findTool(newImg, x, y, patch_half_size=17, sigma=5):
     y_top_left = y-mask_half_size
     x_new = x_top_left + x_rel
     y_new = y_top_left + y_rel
-    '''
-    plt.figure()
 
-    plt.subplot(2,3,1)
-    plt.imshow(old)
-    plt.axis("off")
-    plt.title("original patch")
-    plt.scatter((patch[0].size-mask[0].size)/2+x_rel,(patch[0].size-mask[0].size)/2+y_rel)
-
-    plt.subplot(2,3,2)
-    plt.imshow(patch)
-    plt.axis("off")
-    plt.title("DoG")
-
-    #plt.figure()
-    plt.subplot(2,3,3)
-    plt.imshow(response)
-    plt.axis("off")
-    plt.title("response matrix")
-
-    plt.subplot(2,3,4)
-    plt.imshow(mask)
-    plt.axis("off")
-    plt.title("mask with gaussian")
-    #plt.figure()
-    plt.subplot(2,3,5)
-    plt.imshow(maskedResponse)
-    plt.axis("off")
-    plt.title("masked response with gaussian")
-    plt.scatter(x_rel,y_rel)
-
-    plt.show()
-    '''
     return [x_new, y_new]
+'''
 
 def findClosest(lst, point):
+    # input: a list lst of points and a point
+    # output: the element of the list which is closest to the point
+    
     dist = [np.sqrt((p[0]-point[0])*(p[0]-point[0])+(p[1]-point[1])*(p[1]-point[1])) for p in lst]
+
     return lst[np.argmin(dist)]
